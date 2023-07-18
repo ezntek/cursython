@@ -23,12 +23,71 @@ pub struct BitwExpr {
     values: Box<[Expr; 2]>,
 }
 
-pub struct BinExpr {
+pub struct LogExpr {
     op: LogOp,
     values: Box<[Expr]>,
 }
 
 pub enum CondExpr {
-    Bin(BinExpr),
+    Log(LogExpr),
     Cmp(CmpExpr),
+}
+
+impl Codegen for Kwarg {
+    fn codegen(&self) -> String {
+        format!("{}={}", self.name.codegen(), self.value.codegen())
+    }
+}
+
+impl Codegen for MathExpr {
+    fn codegen(&self) -> String {
+        self.values
+            .iter()
+            .map(|expr| expr.codegen())
+            .collect::<Vec<String>>()
+            .join(format!(" {} ", self.op.codegen()).as_str())
+    }
+}
+
+impl Codegen for CmpExpr {
+    fn codegen(&self) -> String {
+        format!(
+            "{} {} {}",
+            self.values[0].codegen(),
+            self.op.codegen(),
+            self.values[1].codegen(),
+        )
+    }
+}
+
+impl Codegen for BitwExpr {
+    fn codegen(&self) -> String {
+        format!(
+            "{} {} {}",
+            self.values[0].codegen(),
+            self.op.codegen(),
+            self.values[1].codegen(),
+        )
+    }
+}
+
+impl Codegen for LogExpr {
+    fn codegen(&self) -> String {
+        self.values
+            .iter()
+            .map(|expr| expr.codegen())
+            .collect::<Vec<String>>()
+            .join(format!(" {} ", self.op.codegen()).as_str())
+    }
+}
+
+impl Codegen for CondExpr {
+    fn codegen(&self) -> String {
+        use CondExpr::*;
+
+        match self {
+            Log(expr) => expr.codegen(),
+            Cmp(expr) => expr.codegen(),
+        }
+    }
 }
