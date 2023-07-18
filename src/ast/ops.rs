@@ -1,5 +1,6 @@
 use crate::codegen::Codegen;
 
+#[derive(Clone)]
 pub enum MathOp {
     Add,
     Sub,
@@ -8,8 +9,34 @@ pub enum MathOp {
     Pow,
 }
 
+#[derive(Clone)]
+pub enum CmpOp {
+    Gt,
+    Lt,
+    Eq,
+    Neq,
+    Geq,
+    Leq,
+}
+
+#[derive(Clone)]
+pub enum BitwOp {
+    And,
+    Or,
+    Xor,
+    Neg,
+    LShift,
+    RShift,
+}
+
+#[derive(Clone)]
+pub enum LogOp {
+    And,
+    Or,
+    Not,
+}
 impl Codegen for MathOp {
-    fn codegen(&self) -> String {
+    fn code_gen(&self) -> String {
         use MathOp::*;
 
         let res = match &self {
@@ -22,19 +49,14 @@ impl Codegen for MathOp {
 
         res.to_owned()
     }
-}
 
-pub enum CmpOp {
-    Gt,
-    Lt,
-    Eq,
-    Neq,
-    Geq,
-    Leq,
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
 }
 
 impl Codegen for CmpOp {
-    fn codegen(&self) -> String {
+    fn code_gen(&self) -> String {
         use CmpOp::*;
 
         let res = match &self {
@@ -48,19 +70,14 @@ impl Codegen for CmpOp {
 
         res.to_owned()
     }
-}
 
-pub enum BitwOp {
-    And,
-    Or,
-    Xor,
-    Neg,
-    LShift,
-    RShift,
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
 }
 
 impl Codegen for BitwOp {
-    fn codegen(&self) -> String {
+    fn code_gen(&self) -> String {
         use BitwOp::*;
 
         let res = match &self {
@@ -74,16 +91,14 @@ impl Codegen for BitwOp {
 
         res.to_owned()
     }
-}
 
-pub enum LogOp {
-    And,
-    Or,
-    Not,
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
 }
 
 impl Codegen for LogOp {
-    fn codegen(&self) -> String {
+    fn code_gen(&self) -> String {
         use LogOp::*;
 
         let res = match &self {
@@ -93,5 +108,9 @@ impl Codegen for LogOp {
         };
 
         res.to_owned()
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
     }
 }
