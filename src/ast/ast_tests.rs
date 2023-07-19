@@ -3,7 +3,9 @@ use std::{
     io::{BufWriter, Write},
 };
 
-use super::{Block, Ident};
+use serde::Serialize;
+
+use super::{stmt::IfStmt, Block, Ident};
 use crate::codegen::Codegen;
 
 #[test]
@@ -51,8 +53,55 @@ fn test_nested_blocks() {
 
     let code = block1.code_gen();
 
-    let f = File::create("out.txt").unwrap();
-    let mut f = BufWriter::new(f);
+    println!("{}", code)
+}
 
-    f.write_all(code.as_bytes()).unwrap();
+#[test]
+fn test_deser() {
+    let ident = Ident {
+        name: "foo".to_owned(),
+    };
+
+    let deser_data = serde_json::to_string(&ident).unwrap();
+    println!("{}", deser_data);
+}
+
+#[test]
+fn test_ifstmt() {
+    let code = r#"
+{
+    "type": "IfStmt",
+    "branches": [
+        {
+            "type": "If",
+            "condition": {
+                "type": "CmpExpr",
+                "op": "Gt",
+                "values": [{"type": "Literal", "value": "1"},
+                           {"type": "Literal", "value": "2"}]
+            },
+            "content": {
+                "type": "Block",
+                "content": [
+                    {
+                        "type": "CallStmt",
+                        "base": {
+                            "type": "Ident",
+                            "name": "print"
+                        },
+                        "args": [
+                            {"type": "Literal", "value": "\"maths is broken!\""}
+                        ],
+                        "kw_args": []
+                    }
+                ]
+            }
+        }
+    ]
+}
+    "#;
+
+    let ast: IfStmt = serde_json::from_str(code).unwrap();
+    let gen_code = ast.code_gen();
+    println!("{}", gen_code)
 }

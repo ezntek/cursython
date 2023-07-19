@@ -1,6 +1,8 @@
 use crate::codegen::Codegen;
+use serde::{Deserialize, Serialize};
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(tag = "type")]
 pub enum MathOp {
     Add,
     Sub,
@@ -9,7 +11,8 @@ pub enum MathOp {
     Pow,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
+//#[serde(untagged)]
 pub enum CmpOp {
     Gt,
     Lt,
@@ -19,7 +22,8 @@ pub enum CmpOp {
     Leq,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(tag = "type")]
 pub enum BitwOp {
     And,
     Or,
@@ -29,12 +33,15 @@ pub enum BitwOp {
     RShift,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(tag = "type")]
 pub enum LogOp {
     And,
     Or,
     Not,
 }
+
+#[typetag::serde]
 impl Codegen for MathOp {
     fn code_gen(&self) -> String {
         use MathOp::*;
@@ -51,6 +58,7 @@ impl Codegen for MathOp {
     }
 }
 
+#[typetag::serde]
 impl Codegen for CmpOp {
     fn code_gen(&self) -> String {
         use CmpOp::*;
@@ -68,6 +76,7 @@ impl Codegen for CmpOp {
     }
 }
 
+#[typetag::serde]
 impl Codegen for BitwOp {
     fn code_gen(&self) -> String {
         use BitwOp::*;
@@ -85,6 +94,7 @@ impl Codegen for BitwOp {
     }
 }
 
+#[typetag::serde]
 impl Codegen for LogOp {
     fn code_gen(&self) -> String {
         use LogOp::*;

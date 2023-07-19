@@ -1,51 +1,60 @@
 use super::expr::*;
 use super::*;
+use serde::{Deserialize, Serialize};
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(tag = "type")]
 pub enum IfBranch {
-    Top { condition: Value, content: Block },
-    Middle { condition: Value, content: Block },
-    Bottom { content: Block },
+    If { condition: Value, content: Block },
+    Elif { condition: Value, content: Block },
+    Else { content: Block },
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(tag = "type")]
 pub struct SetStmt {
     name: Ident,
     value: Value,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(tag = "type")]
 pub struct CallStmt {
     base: Value,
     args: Box<[Value]>,
     kw_args: Box<[Kwarg]>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(tag = "type")]
 pub struct PropertyStmt {
     base: Value,
     props: Box<[Ident]>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(tag = "type")]
 pub struct IfStmt {
     branches: Box<[IfBranch]>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(tag = "type")]
 pub struct ForStmt {
     iter_subj: Value,
     iter_vals: Box<[Ident]>,
     content: Block,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(tag = "type")]
 pub struct WhileStmt {
     cond: Value,
     content: Block,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(tag = "type")]
 pub struct DefStmt {
     name: Ident,
     args: Box<[Value]>,
@@ -53,12 +62,14 @@ pub struct DefStmt {
     content: Block,
 }
 
+#[typetag::serde]
 impl Codegen for SetStmt {
     fn code_gen(&self) -> String {
         format!("{} = {}", self.name.code_gen(), self.value.code_gen())
     }
 }
 
+#[typetag::serde]
 impl Codegen for CallStmt {
     fn code_gen(&self) -> String {
         let mut args = self
@@ -87,6 +98,7 @@ impl Codegen for CallStmt {
     }
 }
 
+#[typetag::serde]
 impl Codegen for PropertyStmt {
     fn code_gen(&self) -> String {
         let mut prop_items = self
@@ -103,19 +115,20 @@ impl Codegen for PropertyStmt {
     }
 }
 
+#[typetag::serde]
 impl Codegen for IfStmt {
     fn code_gen(&self) -> String {
         let gen_branch = |branch: &IfBranch| {
             use IfBranch::*;
 
             match branch {
-                Top { condition, content } => {
+                If { condition, content } => {
                     format!("if {}{}", condition.code_gen(), content.code_gen())
                 }
-                Middle { condition, content } => {
+                Elif { condition, content } => {
                     format!("elif {}{}", condition.code_gen(), content.code_gen())
                 }
-                Bottom { content } => format!("else{}", content.code_gen()),
+                Else { content } => format!("else{}", content.code_gen()),
             }
         };
 
@@ -127,6 +140,7 @@ impl Codegen for IfStmt {
     }
 }
 
+#[typetag::serde]
 impl Codegen for ForStmt {
     fn code_gen(&self) -> String {
         let iter_vals = {
@@ -148,12 +162,14 @@ impl Codegen for ForStmt {
     }
 }
 
+#[typetag::serde]
 impl Codegen for WhileStmt {
     fn code_gen(&self) -> String {
         format!("while {}{}", self.cond.code_gen(), self.content.code_gen())
     }
 }
 
+#[typetag::serde]
 impl Codegen for DefStmt {
     fn code_gen(&self) -> String {
         let args = self

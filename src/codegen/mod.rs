@@ -1,6 +1,6 @@
 use dyn_clone::{clone_trait_object, DynClone};
-use std::any::Any;
 
+#[typetag::serde(tag = "type")]
 pub trait Codegen: DynClone {
     fn code_gen(&self) -> String;
 }

@@ -1,4 +1,5 @@
 use crate::codegen::Codegen;
+use serde::{Deserialize, Serialize};
 
 mod expr;
 mod ops;
@@ -10,7 +11,8 @@ mod ast_tests;
 #[derive(Clone, Copy)]
 pub enum Stmt {}
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(tag = "type")]
 pub struct Block {
     content: Box<[Value]>,
     indented_lvls: Option<usize>,
@@ -18,17 +20,33 @@ pub struct Block {
 
 pub type Value = Box<dyn Codegen>;
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(tag = "type")]
 pub struct Ident {
     name: String,
 }
 
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(tag = "type")]
+pub struct Literal {
+    value: String,
+}
+
+#[typetag::serde]
 impl Codegen for Ident {
     fn code_gen(&self) -> String {
         self.name.clone()
     }
 }
 
+#[typetag::serde]
+impl Codegen for Literal {
+    fn code_gen(&self) -> String {
+        self.value.clone()
+    }
+}
+
+#[typetag::serde]
 impl Codegen for Block {
     fn code_gen(&self) -> String {
         let indents = self.indented_lvls.unwrap_or(1);
