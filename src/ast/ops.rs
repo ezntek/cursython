@@ -49,10 +49,6 @@ impl Codegen for MathOp {
 
         res.to_owned()
     }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
-    }
 }
 
 impl Codegen for CmpOp {
@@ -69,10 +65,6 @@ impl Codegen for CmpOp {
         };
 
         res.to_owned()
-    }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
     }
 }
 
@@ -91,10 +83,6 @@ impl Codegen for BitwOp {
 
         res.to_owned()
     }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
-    }
 }
 
 impl Codegen for LogOp {
@@ -108,9 +96,5 @@ impl Codegen for LogOp {
         };
 
         res.to_owned()
-    }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
     }
 }

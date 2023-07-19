@@ -2,16 +2,10 @@ use super::expr::*;
 use super::*;
 
 #[derive(Clone)]
-pub enum IfBranchClause {
-    First,
-    Middle,
-    End,
-}
-
-#[derive(Clone)]
-pub struct IfBranch {
-    clause_t: IfBranchClause,
-    content: Block,
+pub enum IfBranch {
+    Top { condition: Value, content: Block },
+    Middle { condition: Value, content: Block },
+    Bottom { content: Block },
 }
 
 #[derive(Clone)]
@@ -23,7 +17,7 @@ pub struct SetStmt {
 #[derive(Clone)]
 pub struct CallStmt {
     base: Value,
-    args: Box<[Expr]>,
+    args: Box<[Value]>,
     kw_args: Box<[Kwarg]>,
 }
 
@@ -35,7 +29,6 @@ pub struct PropertyStmt {
 
 #[derive(Clone)]
 pub struct IfStmt {
-    cond: CondExpr,
     branches: Box<[IfBranch]>,
 }
 
@@ -48,14 +41,14 @@ pub struct ForStmt {
 
 #[derive(Clone)]
 pub struct WhileStmt {
-    cond: CondExpr,
+    cond: Value,
     content: Block,
 }
 
 #[derive(Clone)]
 pub struct DefStmt {
     name: Ident,
-    args: Box<[Expr]>,
+    args: Box<[Value]>,
     kw_args: Box<[Kwarg]>,
     content: Block,
 }
@@ -63,10 +56,6 @@ pub struct DefStmt {
 impl Codegen for SetStmt {
     fn code_gen(&self) -> String {
         format!("{} = {}", self.name.code_gen(), self.value.code_gen())
-    }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
     }
 }
 
@@ -96,10 +85,6 @@ impl Codegen for CallStmt {
 
         format!("{}({}{})", self.base.code_gen(), args, kwargs)
     }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
-    }
 }
 
 impl Codegen for PropertyStmt {
@@ -116,18 +101,80 @@ impl Codegen for PropertyStmt {
 
         res.join(".")
     }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
-    }
 }
 
 impl Codegen for IfStmt {
     fn code_gen(&self) -> String {
-        todo!()
-    }
+        let gen_branch = |branch: &IfBranch| {
+            use IfBranch::*;
 
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
+            match branch {
+                Top { condition, content } => {
+                    format!("if {}{}", condition.code_gen(), content.code_gen())
+                }
+                Middle { condition, content } => {
+                    format!("elif {}{}", condition.code_gen(), content.code_gen())
+                }
+                Bottom { content } => format!("else{}", content.code_gen()),
+            }
+        };
+
+        self.branches
+            .iter()
+            .map(gen_branch)
+            .collect::<Vec<String>>()
+            .join("")
+    }
+}
+
+impl Codegen for ForStmt {
+    fn code_gen(&self) -> String {
+        let iter_vals = {
+            let res = self
+                .iter_vals
+                .iter()
+                .map(|ident| ident.code_gen())
+                .collect::<Vec<String>>()
+                .join(",");
+            format!("({})", res)
+        };
+
+        format!(
+            "for {} in {}{}",
+            iter_vals,
+            self.iter_subj.code_gen(),
+            self.content.code_gen()
+        )
+    }
+}
+
+impl Codegen for WhileStmt {
+    fn code_gen(&self) -> String {
+        format!("while {}{}", self.cond.code_gen(), self.content.code_gen())
+    }
+}
+
+impl Codegen for DefStmt {
+    fn code_gen(&self) -> String {
+        let args = self
+            .args
+            .iter()
+            .map(|expr| expr.code_gen())
+            .collect::<Vec<String>>()
+            .join(", ");
+        let kwargs = self
+            .kw_args
+            .iter()
+            .map(|expr| expr.code_gen())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        format!(
+            "def {}({}, {}){}",
+            self.name.code_gen(),
+            args,
+            kwargs,
+            self.content.code_gen()
+        )
     }
 }
