@@ -1,0 +1,27 @@
+{
+    "type": "Module",
+    "name": "basic_for_loop",
+    "content": [
+        {
+            "type": "ForStmt",
+            "iter_vals": [{ "type": "Ident", "name": "i" }],
+            "iter_subj": {
+                "type": "CallStmt",
+                "base": { "type": "Ident", "name": "range" },
+                "args": [{ "type": "Literal", "value": "5" }],
+                "kw_args": []
+            },
+            "content": {
+                "type": "Block",
+                "content": [
+                    {
+                        "type": "CallStmt",
+                        "base": { "type": "Ident", "name": "print"},
+                        "args": [{ "type": "Literal", "value": "f\"count={i}\"" }],
+                        "kw_args": []
+                    }
+                ]
+            }
+        }
+    ]
+}

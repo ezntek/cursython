@@ -1,7 +1,7 @@
-mod expr;
-mod ops;
-mod stmt;
-mod toplevel;
+pub mod expr;
+pub mod ops;
+pub mod stmt;
+pub mod toplevel;
 
 use crate::codegen::Codegen;
 use serde::{Deserialize, Serialize};
@@ -57,7 +57,6 @@ impl Codegen for Block {
             .content
             .iter()
             .map(|val| {
-                dbg!(val);
                 let generated_code = match val.get_indents() {
                     Some(_) => {
                         let mut new_val = val.clone();

@@ -1,7 +1,7 @@
 use std::{
     fs::File,
     io::{BufWriter, Write},
-    path::Path,
+    path::{Path, PathBuf},
 };
 
 use super::*;
@@ -11,7 +11,6 @@ use super::*;
 pub struct Module {
     name: String,
     content: Box<[Value]>,
-    code_memo: Option<String>,
 }
 
 #[typetag::serde]
@@ -26,23 +25,21 @@ impl Codegen for Module {
 }
 
 impl Module {
-    pub fn write<P: AsRef<Path>>(&self, path: P) {
+    pub fn write_file<P: AsRef<Path>>(&self, dir: Option<P>) {
+        let dir = if let Some(d) = dir {
+            d.as_ref().to_path_buf()
+        } else {
+            PathBuf::from("./")
+        };
+
+        let path = dir.join(format!("{}.py", self.name));
+
         let res = self.code_gen();
-        let file = File::create(path.as_ref()).unwrap_or_else(|e| {
-            panic!(
-                "failed to create a file at {}: {}",
-                path.as_ref().display(),
-                e
-            )
-        });
+        let file = File::create(&path)
+            .unwrap_or_else(|e| panic!("failed to create a file at {}: {}", path.display(), e));
 
         let mut file = BufWriter::new(file);
-        file.write_all(res.as_bytes()).unwrap_or_else(|e| {
-            panic!(
-                "failed to write the file at {}: {}",
-                path.as_ref().display(),
-                e
-            )
-        });
+        file.write_all(res.as_bytes())
+            .unwrap_or_else(|e| panic!("failed to write the file at {}: {}", path.display(), e));
     }
 }
