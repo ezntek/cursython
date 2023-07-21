@@ -1,8 +1,7 @@
 use crate::codegen::Codegen;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Serialize, Deserialize)]
-#[serde(tag = "type")]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum MathOp {
     Add,
     Sub,
@@ -11,8 +10,7 @@ pub enum MathOp {
     Pow,
 }
 
-#[derive(Clone, Serialize, Deserialize)]
-//#[serde(untagged)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum CmpOp {
     Gt,
     Lt,
@@ -22,8 +20,7 @@ pub enum CmpOp {
     Leq,
 }
 
-#[derive(Clone, Serialize, Deserialize)]
-#[serde(tag = "type")]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum BitwOp {
     And,
     Or,
@@ -33,8 +30,7 @@ pub enum BitwOp {
     RShift,
 }
 
-#[derive(Clone, Serialize, Deserialize)]
-#[serde(tag = "type")]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum LogOp {
     And,
     Or,

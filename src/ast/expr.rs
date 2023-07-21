@@ -4,35 +4,35 @@ use serde::{Deserialize, Serialize};
 use super::ops::*;
 use super::{Ident, Value};
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub struct Kwarg {
     name: Ident,
     value: Value,
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub struct MathExpr {
     op: MathOp,
     values: Box<[Value]>,
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub struct CmpExpr {
     op: CmpOp,
     values: Box<[Value; 2]>,
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub struct BitwExpr {
     op: BitwOp,
     values: Box<[Value; 2]>,
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub struct LogExpr {
     op: LogOp,

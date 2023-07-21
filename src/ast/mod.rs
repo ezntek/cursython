@@ -1,9 +1,10 @@
-use crate::codegen::Codegen;
-use serde::{Deserialize, Serialize};
-
 mod expr;
 mod ops;
 mod stmt;
+mod toplevel;
+
+use crate::codegen::Codegen;
+use serde::{Deserialize, Serialize};
 
 #[cfg(test)]
 mod ast_tests;
@@ -11,22 +12,22 @@ mod ast_tests;
 #[derive(Clone, Copy)]
 pub enum Stmt {}
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub struct Block {
     content: Box<[Value]>,
-    indented_lvls: Option<usize>,
+    indents: Option<usize>,
 }
 
 pub type Value = Box<dyn Codegen>;
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub struct Ident {
     name: String,
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub struct Literal {
     value: String,
@@ -49,18 +50,19 @@ impl Codegen for Literal {
 #[typetag::serde]
 impl Codegen for Block {
     fn code_gen(&self) -> String {
-        let indents = self.indented_lvls.unwrap_or(1);
+        let indents = self.get_indents().unwrap();
         let indents_string = "    ".repeat(indents);
 
         let lines = self
             .content
             .iter()
             .map(|val| {
-                let generated_code = match (val as &dyn std::any::Any).downcast_ref::<Block>() {
-                    Some(block) => {
-                        let mut b = block.clone();
-                        b.indented_lvls = Some(indents + 1);
-                        b.code_gen()
+                dbg!(val);
+                let generated_code = match val.get_indents() {
+                    Some(_) => {
+                        let mut new_val = val.clone();
+                        new_val.set_indents(self.get_indents().unwrap() + 1);
+                        new_val.code_gen()
                     }
                     None => val.code_gen(),
                 };
@@ -72,5 +74,13 @@ impl Codegen for Block {
         let mut res = String::from(":\n");
         res.push_str(lines.as_str());
         res
+    }
+
+    fn get_indents(&self) -> Option<usize> {
+        Some(self.indents.unwrap_or(1))
+    }
+
+    fn set_indents(&mut self, n: usize) {
+        self.indents = Some(n)
     }
 }

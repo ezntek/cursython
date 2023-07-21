@@ -2,7 +2,7 @@ use super::expr::*;
 use super::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub enum IfBranch {
     If { condition: Value, content: Block },
@@ -10,14 +10,23 @@ pub enum IfBranch {
     Else { content: Block },
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub struct SetStmt {
     name: Ident,
     value: Value,
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[allow(clippy::enum_variant_names)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(tag = "type")]
+pub enum ImportStmt {
+    ImportStmt { mod_name: Value },
+    ImportAsStmt { mod_name: Value, import_as: Ident },
+    FromImportStmt { mod_name: Ident, import_from: Value },
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub struct CallStmt {
     base: Value,
@@ -25,41 +34,68 @@ pub struct CallStmt {
     kw_args: Box<[Kwarg]>,
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(tag = "type")]
+pub struct ReturnStmt {
+    value: Value,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(tag = "type")]
+pub struct YieldStmt {
+    value: Value,
+}
+
+// TODO: Tuple, List and Dict syntax
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub struct PropertyStmt {
     base: Value,
     props: Box<[Ident]>,
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub struct IfStmt {
     branches: Box<[IfBranch]>,
+    block_indents: Option<usize>,
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub struct ForStmt {
     iter_subj: Value,
     iter_vals: Box<[Ident]>,
     content: Block,
+    block_indents: Option<usize>,
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub struct WhileStmt {
     cond: Value,
     content: Block,
+    block_indents: Option<usize>,
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub struct DefStmt {
     name: Ident,
-    args: Box<[Value]>,
+    args: Box<[Ident]>,
     kw_args: Box<[Kwarg]>,
     content: Block,
+    block_indents: Option<usize>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(tag = "type")]
+pub struct ClassStmt {
+    name: Ident,
+    parents: Box<[Value]>,
+    methods: Box<[DefStmt]>,
+    block_indents: Option<usize>,
 }
 
 #[typetag::serde]
@@ -72,13 +108,12 @@ impl Codegen for SetStmt {
 #[typetag::serde]
 impl Codegen for CallStmt {
     fn code_gen(&self) -> String {
-        let mut args = self
+        let args = self
             .args
             .iter()
             .map(|expr| expr.code_gen())
             .collect::<Vec<String>>()
             .join(", ");
-        args.push_str(", ");
 
         let kwargs_vec = self
             .kw_args
@@ -87,14 +122,28 @@ impl Codegen for CallStmt {
             .collect::<Vec<String>>();
 
         let kwargs = if !kwargs_vec.is_empty() {
-            let mut s = kwargs_vec.join(", ");
-            s.push_str(", ");
+            let s = kwargs_vec.join(", ");
+            let s = format!(", {}", s);
             s
         } else {
             "".to_owned()
         };
 
         format!("{}({}{})", self.base.code_gen(), args, kwargs)
+    }
+}
+
+#[typetag::serde]
+impl Codegen for ReturnStmt {
+    fn code_gen(&self) -> String {
+        format!("return {}", self.value.code_gen())
+    }
+}
+
+#[typetag::serde]
+impl Codegen for YieldStmt {
+    fn code_gen(&self) -> String {
+        format!("yield {}", self.value.code_gen())
     }
 }
 
@@ -112,6 +161,27 @@ impl Codegen for PropertyStmt {
         res.append(&mut prop_items);
 
         res.join(".")
+    }
+}
+
+#[typetag::serde]
+impl Codegen for ImportStmt {
+    fn code_gen(&self) -> String {
+        match self {
+            ImportStmt::ImportStmt { mod_name } => format!("import {}", mod_name.code_gen()),
+            ImportStmt::ImportAsStmt {
+                mod_name,
+                import_as,
+            } => format!("import {} as {}", mod_name.code_gen(), import_as.code_gen()),
+            ImportStmt::FromImportStmt {
+                mod_name,
+                import_from,
+            } => format!(
+                "from {} import {}",
+                import_from.code_gen(),
+                mod_name.code_gen()
+            ),
+        }
     }
 }
 
@@ -138,6 +208,43 @@ impl Codegen for IfStmt {
             .collect::<Vec<String>>()
             .join("")
     }
+
+    fn get_indents(&self) -> Option<usize> {
+        Some(self.block_indents.unwrap_or(1))
+    }
+
+    fn set_indents(&mut self, n: usize) {
+        self.block_indents = Some(n);
+
+        self.branches = self
+            .branches
+            .iter()
+            .map(|branch| match branch {
+                IfBranch::If { condition, content } => {
+                    let mut content = content.clone();
+                    content.set_indents(n);
+                    IfBranch::If {
+                        condition: condition.clone(),
+                        content,
+                    }
+                }
+                IfBranch::Elif { condition, content } => {
+                    let mut content = content.clone();
+                    content.set_indents(n);
+                    IfBranch::Elif {
+                        condition: condition.clone(),
+                        content,
+                    }
+                }
+                IfBranch::Else { content } => {
+                    let mut content = content.clone();
+                    content.set_indents(n);
+                    IfBranch::Else { content }
+                }
+            })
+            .collect::<Vec<IfBranch>>()
+            .into_boxed_slice();
+    }
 }
 
 #[typetag::serde]
@@ -160,12 +267,28 @@ impl Codegen for ForStmt {
             self.content.code_gen()
         )
     }
+
+    fn get_indents(&self) -> Option<usize> {
+        Some(self.block_indents.unwrap_or(1))
+    }
+
+    fn set_indents(&mut self, n: usize) {
+        (self.block_indents, self.content.indents) = (Some(n), Some(n));
+    }
 }
 
 #[typetag::serde]
 impl Codegen for WhileStmt {
     fn code_gen(&self) -> String {
         format!("while {}{}", self.cond.code_gen(), self.content.code_gen())
+    }
+
+    fn get_indents(&self) -> Option<usize> {
+        Some(self.block_indents.unwrap_or(1))
+    }
+
+    fn set_indents(&mut self, n: usize) {
+        (self.block_indents, self.content.indents) = (Some(n), Some(n));
     }
 }
 
@@ -178,19 +301,74 @@ impl Codegen for DefStmt {
             .map(|expr| expr.code_gen())
             .collect::<Vec<String>>()
             .join(", ");
-        let kwargs = self
+        let mut kwargs = self
             .kw_args
             .iter()
             .map(|expr| expr.code_gen())
             .collect::<Vec<String>>()
             .join(", ");
 
+        if self.kw_args.is_empty() {
+            kwargs = "".to_owned()
+        }
+
         format!(
-            "def {}({}, {}){}",
+            "def {}({}{}){}",
             self.name.code_gen(),
             args,
             kwargs,
             self.content.code_gen()
         )
+    }
+
+    fn get_indents(&self) -> Option<usize> {
+        Some(self.block_indents.unwrap_or(1))
+    }
+
+    fn set_indents(&mut self, n: usize) {
+        (self.block_indents, self.content.indents) = (Some(n), Some(n));
+    }
+}
+
+#[typetag::serde]
+impl Codegen for ClassStmt {
+    fn code_gen(&self) -> String {
+        let methods = self
+            .methods
+            .iter()
+            .map(|blk| {
+                let mut res = blk.clone();
+                res.set_indents(self.get_indents().unwrap() + 1);
+                format!("    {}", res.code_gen())
+            })
+            .collect::<Vec<String>>()
+            .join("\n");
+
+        let parents = self
+            .parents
+            .iter()
+            .map(|expr| expr.code_gen())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        format!("class {}({}):\n{}", self.name.code_gen(), parents, methods)
+    }
+
+    fn get_indents(&self) -> Option<usize> {
+        Some(self.block_indents.unwrap_or(1))
+    }
+
+    fn set_indents(&mut self, n: usize) {
+        self.block_indents = Some(n);
+        self.methods = self
+            .methods
+            .iter()
+            .map(|stmt| {
+                let mut s = stmt.clone();
+                s.set_indents(n);
+                s
+            })
+            .collect::<Vec<DefStmt>>()
+            .into_boxed_slice();
     }
 }
