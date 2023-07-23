@@ -86,6 +86,7 @@ pub struct DefStmt {
     args: Box<[Ident]>,
     kw_args: Box<[Kwarg]>,
     content: Block,
+    decorator: Option<Value>,
     block_indents: Option<usize>,
 }
 
@@ -312,8 +313,15 @@ impl Codegen for DefStmt {
             kwargs = "".to_owned()
         }
 
+        let decorator = if let Some(deco) = &self.decorator {
+            format!("@{}\n", deco.code_gen())
+        } else {
+            "".to_owned()
+        };
+
         format!(
-            "def {}({}{}){}",
+            "{}def {}({}{}){}",
+            decorator,
             self.name.code_gen(),
             args,
             kwargs,

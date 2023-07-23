@@ -7,7 +7,7 @@ use cursython::{batch_transpile, transpile_file};
 pub enum Command {
     Compile {
         #[arg(short = 'o')]
-        outdir: Option<PathBuf>,
+        outfile: Option<PathBuf>,
         infile: PathBuf,
     },
     BatchCompile {
@@ -17,7 +17,8 @@ pub enum Command {
 }
 
 #[derive(Parser)]
-#[command(author, version, about, long_about=None)]
+#[command(author, version, long_about=None)]
+#[command(about = "The Curysthon Compiler/Transpiler.")]
 struct Args {
     #[command(subcommand)]
     command: Command,
@@ -27,12 +28,12 @@ fn main() {
     color_eyre::install().unwrap();
 
     match Args::parse().command {
-        Command::Compile { outdir, infile } => {
+        Command::Compile { outfile, infile } => {
             if !infile.exists() {
                 panic!("the file at {} doesn't exist.", infile.display())
             }
 
-            transpile_file(infile, outdir.unwrap_or(PathBuf::from("./"))).unwrap();
+            transpile_file(infile, outfile).unwrap();
         }
         Command::BatchCompile { outdir, indir } => {
             if !outdir.exists() {

@@ -25,21 +25,31 @@ impl Codegen for Module {
 }
 
 impl Module {
-    pub fn write_file<P: AsRef<Path>>(&self, dir: Option<P>) {
-        let dir = if let Some(d) = dir {
-            d.as_ref().to_path_buf()
+    pub fn write_file<P: AsRef<Path>>(&self, out: Option<P>) {
+        let out = if let Some(of) = out {
+            of.as_ref().to_path_buf()
         } else {
-            PathBuf::from("./")
+            let mut p = PathBuf::from(&self.name);
+            p.set_extension("py");
+            p
         };
 
-        let path = dir.join(format!("{}.py", self.name));
+        let file_name = if out.extension().is_none() {
+            let mut out = out.clone();
+            out.set_extension(".py");
+            out
+        } else {
+            out.clone()
+        };
 
         let res = self.code_gen();
-        let file = File::create(&path)
-            .unwrap_or_else(|e| panic!("failed to create a file at {}: {}", path.display(), e));
+        let file = File::create(&out).unwrap_or_else(|e| {
+            panic!("failed to create a file at {}: {}", file_name.display(), e)
+        });
 
         let mut file = BufWriter::new(file);
-        file.write_all(res.as_bytes())
-            .unwrap_or_else(|e| panic!("failed to write the file at {}: {}", path.display(), e));
+        file.write_all(res.as_bytes()).unwrap_or_else(|e| {
+            panic!("failed to write the file at {}: {}", file_name.display(), e)
+        });
     }
 }

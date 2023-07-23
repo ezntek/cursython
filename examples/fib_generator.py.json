@@ -1,0 +1,100 @@
+{
+    "type": "Module",
+    "name": "fib_generator",
+    "content": [
+        {
+            "type": "DefStmt",
+            "name": { "type": "Ident", "name": "fibs" },
+            "args": [{ "type": "Ident", "name": "n" }],
+            "kw_args": [],
+            "content": { "type": "Block", "content": [
+                {
+                    "type": "DefStmt",
+                    "name": { "type": "Ident", "name": "fib" },
+                    "args": [{ "type": "Ident", "name": "n" }],
+                    "kw_args": [],
+                    "content": { "type": "Block", "content": [
+                        { "type": "IfStmt", "branches": [
+                            {
+                                "type": "If",
+                                "condition": {
+                                    "type": "CmpExpr",
+                                    "op": "Leq",
+                                    "values": [
+                                        { "type": "Ident", "name": "n" },
+                                        { "type": "Literal", "value": "1" }]
+                                },
+                                "content": { "type": "Block", "content": [
+                                    { "type": "ReturnStmt", "value": { "type": "Ident", "name": "n" } }
+                                ]}
+                            }
+                        ]},
+                        {
+                            "type": "ReturnStmt",
+                            "value": {
+                                "type": "MathExpr",
+                                "op": "Add",
+                                "values": [
+                                    {
+                                        "type": "CallStmt",
+                                        "base": { "type": "Ident", "name": "fib" },
+                                        "args": [
+                                            { "type": "MathExpr", "op": "Sub", "values": [
+                                                { "type": "Ident", "name": "n" },
+                                                { "type": "Literal", "value": "1" }
+                                            ]}
+                                        ],
+                                        "kw_args": []
+                                    },
+                                    {
+                                        "type": "CallStmt",
+                                        "base": { "type": "Ident", "name": "fib" },
+                                        "args": [
+                                            { "type": "MathExpr", "op": "Sub", "values": [
+                                                { "type": "Ident", "name": "n" },
+                                                { "type": "Literal", "value": "2" }
+                                            ]}
+                                        ],
+                                        "kw_args": []
+                                    }
+                                ]
+                            }
+                        }
+                    ]}
+                },
+                {
+                    "type": "ForStmt",
+                    "iter_vals": [
+                        { "type": "Ident", "name": "i" }
+                    ],
+                    "iter_subj": {
+                        "type": "CallStmt",
+                        "base": { "type": "Ident", "name": "range" },
+                        "args": [{ "type": "Ident", "name": "n" }],
+                        "kw_args": []
+                    },
+                    "content": { "type": "Block", "content": [
+                        {
+                            "type": "YieldStmt",
+                            "value": {
+                                "type": "CallStmt",
+                                "base": { "type": "Ident", "name": "fib" },
+                                "args": [
+                                    {
+                                        "type": "MathExpr",
+                                        "op": "Add",
+                                        "values": [
+                                            { "type": "Ident", "name": "i" },
+                                            { "type": "Literal", "value": "1" }
+                                        ]
+                                    }
+                                ],
+                                "kw_args": []
+                            }
+                        }   
+                    ]}
+                }
+            ]}
+        }
+    ]
+}

@@ -42,49 +42,54 @@ impl Display for TranspileError {
     }
 }
 
-pub fn transpile_file<P: AsRef<Path>>(infile: P, outdir: P) -> Result<(), Box<dyn Error>> {
-    let infile = if let Some(ext) = infile.as_ref().extension() {
-        if ext != "json" {
+pub fn transpile_file<P: AsRef<Path>>(
+    in_file: P,
+    out_file: Option<P>,
+) -> Result<(), Box<dyn Error>> {
+    let (infile, ext) = if let Some(ext) = in_file.as_ref().extension() {
+        if ext != "json" && ext != "ron" {
             println!(
                 "not transpiling {}: file extension doesn't end in .json, skipping.",
-                infile.as_ref().display()
+                in_file.as_ref().display()
             );
             return Ok(());
         }
 
-        infile.as_ref()
+        (in_file.as_ref(), ext.to_str().unwrap())
     } else {
         println!(
             "not transpiling {}: file doesnt have an extension, skipping.",
-            infile.as_ref().display()
+            in_file.as_ref().display()
         );
         return Ok(());
-    };
-
-    let outdir = if !outdir.as_ref().exists() {
-        let err = io::Error::new(
-            io::ErrorKind::NotFound,
-            format!("the path at {} does not exist", outdir.as_ref().display()),
-        );
-        return Err(Box::new(err));
-    } else {
-        outdir.as_ref()
     };
 
     let infile_file = File::open(&infile)?;
     let mut infile_reader = BufReader::new(infile_file);
 
-    let file: Module = match serde_json::from_reader(&mut infile_reader) {
-        Ok(data) => data,
-        Err(err) => {
-            return Err(Box::new(TranspileError::new(
-                Box::new(err),
-                format!("While parsing the JSON file at {}", infile.display()),
-            )))
-        }
+    let file: Module = match ext {
+        "json" => match serde_json::from_reader(&mut infile_reader) {
+            Ok(data) => data,
+            Err(err) => {
+                return Err(Box::new(TranspileError::new(
+                    Box::new(err),
+                    format!("While parsing the JSON file at {}", infile.display()),
+                )))
+            }
+        },
+        "ron" => match ron::de::from_reader(&mut infile_reader) {
+            Ok(data) => data,
+            Err(err) => {
+                return Err(Box::new(TranspileError::new(
+                    Box::new(err),
+                    format!("While parsing the RON file at {}", infile.display()),
+                )))
+            }
+        },
+        _ => panic!("extension {} not supported!", ext),
     };
 
-    file.write_file(Some(&outdir));
+    file.write_file(out_file);
 
     Ok(())
 }
@@ -97,7 +102,7 @@ pub fn batch_transpile<P: AsRef<Path>>(in_dir: P, out_dir: P) -> Result<(), Box<
             .map(|file| PathBuf::from(file));
 
         for f in needed_files_iter {
-            transpile_file(&f, &f.join(outdir))?
+            transpile_file(&f, Some(&outdir.join(f.file_name().unwrap())))?
         }
 
         Ok(())

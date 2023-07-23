@@ -1,0 +1,35 @@
+Module (
+    name: "cherrypy_app",
+    content: [
+        ImportStmt (
+            mod_name: "cherrypy"
+        ),
+        ClassStmt (
+            name: Ident(name: "MyApp"),
+            methods: [
+                DefStmt (
+                    name: Ident(name: "index"),
+                    args: [Ident(name: "self")],
+                    kw_args: [],
+                    decorator: PropertyStmt (
+                        base: Ident(name: "cherrypy"),
+                        props: [Ident(name: "expose")],    
+                    ),
+                    content: Block(content: [
+                        ReturnStmt(value: Literal(value: "\"Hello, World!\"")),
+                    ]),
+                )
+            ],
+        ),
+        CallStmt (
+            base: PropertyStmt (
+                base: Ident(name: "cherrypy"),
+                props: [Ident(name: "quickstart")],
+            ),
+            args: [CallStmt(base: Ident(name: "MyApp"), args: [], kwargs: []],
+            kw_args: [],
+        ),
+    ]
+)
+
+
