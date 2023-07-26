@@ -1,4 +1,4 @@
-use crate::codegen::Codegen;
+use super::codegen::Codegen;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

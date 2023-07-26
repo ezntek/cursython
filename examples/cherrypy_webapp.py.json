@@ -1,0 +1,47 @@
+{
+    "type": "Module",
+    "name": "cherrypy_app",
+    "content": [
+        {
+            "type": "ImportStmt",
+            "mod_name": { "type": "Ident", "name": "cherrypy" }
+        },
+        {
+            "type": "ClassStmt",
+            "name": { "type": "Ident", "name": "MyApp" },
+            "parents": [],
+            "methods": [
+                {
+                    "type": "DefStmt",
+                    "name": { "type": "Ident", "name": "index" },
+                    "args": [{ "type": "Ident", "name": "self" }],
+                    "kw_args": [],
+                    "decorator": {
+                        "type": "PropertyStmt",
+                        "base": { "type": "Ident", "name": "cherrypy" },
+                        "props": [{ "type": "Ident", "name": "expose" }]
+                    },
+                    "content": {
+                        "type": "Block",
+                        "content": [
+                            {
+                                "type": "ReturnStmt",
+                                "value": { "type": "Literal", "value": "\"Hello, world!\"" }
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "type": "CallStmt",
+            "base": {
+                "type": "PropertyStmt",
+                "base": { "type": "Ident", "name": "cherrypy" },
+                "props": [{ "type": "Ident", "name": "quickstart" }]
+            },
+            "args": [{ "type": "CallStmt", "base": { "type": "Ident", "name": "MyApp" }, "args": [], "kw_args": [] }],
+            "kw_args": []
+        }
+    ]
+}

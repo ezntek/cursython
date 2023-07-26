@@ -1,13 +1,11 @@
+pub mod codegen;
 pub mod expr;
 pub mod ops;
 pub mod stmt;
 pub mod toplevel;
 
-use crate::codegen::Codegen;
+use codegen::Codegen;
 use serde::{Deserialize, Serialize};
-
-#[cfg(test)]
-mod ast_tests;
 
 #[derive(Clone, Copy)]
 pub enum Stmt {}

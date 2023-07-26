@@ -9,7 +9,7 @@ pub trait Codegen: DynClone + Debug {
         None
     }
 
-    fn set_indents(&mut self, n: usize) {}
+    fn set_indents(&mut self, _n: usize) {}
 }
 
 clone_trait_object!(Codegen);

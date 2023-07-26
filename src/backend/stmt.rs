@@ -17,13 +17,24 @@ pub struct SetStmt {
     value: Value,
 }
 
-#[allow(clippy::enum_variant_names)]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "type")]
-pub enum ImportStmt {
-    ImportStmt { mod_name: Value },
-    ImportAsStmt { mod_name: Value, import_as: Ident },
-    FromImportStmt { mod_name: Ident, import_from: Value },
+pub struct ImportStmt {
+    mod_name: Value,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(tag = "type")]
+pub struct ImportAsStmt {
+    mod_name: Value,
+    import_as: Ident,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(tag = "type")]
+pub struct FromImportStmt {
+    mod_name: Ident,
+    import_from: Value,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -168,21 +179,29 @@ impl Codegen for PropertyStmt {
 #[typetag::serde]
 impl Codegen for ImportStmt {
     fn code_gen(&self) -> String {
-        match self {
-            ImportStmt::ImportStmt { mod_name } => format!("import {}", mod_name.code_gen()),
-            ImportStmt::ImportAsStmt {
-                mod_name,
-                import_as,
-            } => format!("import {} as {}", mod_name.code_gen(), import_as.code_gen()),
-            ImportStmt::FromImportStmt {
-                mod_name,
-                import_from,
-            } => format!(
-                "from {} import {}",
-                import_from.code_gen(),
-                mod_name.code_gen()
-            ),
-        }
+        format!("import {}", self.mod_name.code_gen())
+    }
+}
+
+#[typetag::serde]
+impl Codegen for ImportAsStmt {
+    fn code_gen(&self) -> String {
+        format!(
+            "import {} as {}",
+            self.mod_name.code_gen(),
+            self.import_as.code_gen()
+        )
+    }
+}
+
+#[typetag::serde]
+impl Codegen for FromImportStmt {
+    fn code_gen(&self) -> String {
+        format!(
+            "from {} import {}",
+            self.import_from.code_gen(),
+            self.mod_name.code_gen()
+        )
     }
 }
 
@@ -296,6 +315,7 @@ impl Codegen for WhileStmt {
 #[typetag::serde]
 impl Codegen for DefStmt {
     fn code_gen(&self) -> String {
+        let indents_stmt = "    ".repeat(self.get_indents().unwrap() - 1);
         let args = self
             .args
             .iter()
@@ -320,8 +340,9 @@ impl Codegen for DefStmt {
         };
 
         format!(
-            "{}def {}({}{}){}",
+            "{}{}def {}({}{}){}",
             decorator,
+            indents_stmt,
             self.name.code_gen(),
             args,
             kwargs,
@@ -341,13 +362,14 @@ impl Codegen for DefStmt {
 #[typetag::serde]
 impl Codegen for ClassStmt {
     fn code_gen(&self) -> String {
+        let indents = "    ".repeat(self.get_indents().unwrap());
         let methods = self
             .methods
             .iter()
             .map(|blk| {
                 let mut res = blk.clone();
                 res.set_indents(self.get_indents().unwrap() + 1);
-                format!("    {}", res.code_gen())
+                format!("{}{}", indents, res.code_gen())
             })
             .collect::<Vec<String>>()
             .join("\n");
