@@ -4,6 +4,13 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "type")]
+pub struct DictKvPair {
+    key: Value,
+    value: Value,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(tag = "type")]
 pub enum IfBranch {
     If { condition: Value, content: Block },
     Elif { condition: Value, content: Block },
@@ -33,7 +40,7 @@ pub struct ImportAsStmt {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub struct FromImportStmt {
-    mod_name: Ident,
+    mod_name: Value,
     import_from: Value,
 }
 
@@ -57,7 +64,23 @@ pub struct YieldStmt {
     value: Value,
 }
 
-// TODO: Tuple, List and Dict syntax
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(tag = "type")]
+pub struct TupleStmt {
+    elems: Box<[Value]>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(tag = "type")]
+pub struct ListStmt {
+    elems: Box<[Value]>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(tag = "type")]
+pub struct DictStmt {
+    elems: Box<[DictKvPair]>,
+}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "type")]
@@ -111,6 +134,13 @@ pub struct ClassStmt {
 }
 
 #[typetag::serde]
+impl Codegen for DictKvPair {
+    fn code_gen(&self) -> String {
+        format!("{}: {}", self.key.code_gen(), self.value.code_gen())
+    }
+}
+
+#[typetag::serde]
 impl Codegen for SetStmt {
     fn code_gen(&self) -> String {
         format!("{} = {}", self.name.code_gen(), self.value.code_gen())
@@ -120,7 +150,7 @@ impl Codegen for SetStmt {
 #[typetag::serde]
 impl Codegen for CallStmt {
     fn code_gen(&self) -> String {
-        let args = self
+        let mut args = self
             .args
             .iter()
             .map(|expr| expr.code_gen())
@@ -134,9 +164,10 @@ impl Codegen for CallStmt {
             .collect::<Vec<String>>();
 
         let kwargs = if !kwargs_vec.is_empty() {
-            let s = kwargs_vec.join(", ");
-            let s = format!(", {}", s);
-            s
+            if !self.args.is_empty() {
+                args += ", "
+            }
+            kwargs_vec.join(", ")
         } else {
             "".to_owned()
         };
@@ -156,6 +187,47 @@ impl Codegen for ReturnStmt {
 impl Codegen for YieldStmt {
     fn code_gen(&self) -> String {
         format!("yield {}", self.value.code_gen())
+    }
+}
+
+#[typetag::serde]
+impl Codegen for TupleStmt {
+    fn code_gen(&self) -> String {
+        let res = self
+            .elems
+            .iter()
+            .map(|elem| elem.code_gen())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        format!("({})", res)
+    }
+}
+
+#[typetag::serde]
+impl Codegen for ListStmt {
+    fn code_gen(&self) -> String {
+        let res = self
+            .elems
+            .iter()
+            .map(|elem| elem.code_gen())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        format!("[{}]", res)
+    }
+}
+
+#[typetag::serde]
+impl Codegen for DictStmt {
+    fn code_gen(&self) -> String {
+        let res = self
+            .elems
+            .iter()
+            .map(|elem| elem.code_gen())
+            .collect::<Vec<String>>()
+            .join(", ");
+        format!("{{ {} }}", res)
     }
 }
 
@@ -322,6 +394,7 @@ impl Codegen for DefStmt {
             .map(|expr| expr.code_gen())
             .collect::<Vec<String>>()
             .join(", ");
+
         let mut kwargs = self
             .kw_args
             .iter()
@@ -334,15 +407,14 @@ impl Codegen for DefStmt {
         }
 
         let decorator = if let Some(deco) = &self.decorator {
-            format!("@{}\n", deco.code_gen())
+            format!("@{}\n{}", deco.code_gen(), indents_stmt)
         } else {
             "".to_owned()
         };
 
         format!(
-            "{}{}def {}({}{}){}",
+            "{}def {}({}{}){}",
             decorator,
-            indents_stmt,
             self.name.code_gen(),
             args,
             kwargs,
@@ -363,6 +435,7 @@ impl Codegen for DefStmt {
 impl Codegen for ClassStmt {
     fn code_gen(&self) -> String {
         let indents = "    ".repeat(self.get_indents().unwrap());
+
         let methods = self
             .methods
             .iter()
@@ -371,8 +444,11 @@ impl Codegen for ClassStmt {
                 res.set_indents(self.get_indents().unwrap() + 1);
                 format!("{}{}", indents, res.code_gen())
             })
-            .collect::<Vec<String>>()
-            .join("\n");
+            .collect::<Vec<String>>();
+
+        let methods_string = methods.join("\n");
+        let mut methods = String::from(":\n");
+        methods += methods_string.as_str();
 
         let parents = self
             .parents
@@ -381,7 +457,7 @@ impl Codegen for ClassStmt {
             .collect::<Vec<String>>()
             .join(", ");
 
-        format!("class {}({}):\n{}", self.name.code_gen(), parents, methods)
+        format!("class {}({}){}", self.name.code_gen(), parents, methods)
     }
 
     fn get_indents(&self) -> Option<usize> {

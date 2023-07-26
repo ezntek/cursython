@@ -50,9 +50,9 @@ pub fn transpile_file<P: AsRef<Path>>(
     out_file: Option<P>,
 ) -> Result<(), Box<dyn Error>> {
     let infile = if let Some(ext) = in_file.as_ref().extension() {
-        if ext != "json" {
+        if ext != "json" && ext != "json5" {
             println!(
-                "not transpiling {}: file extension doesn't end in .json, skipping.",
+                "not transpiling {}: file extension doesn't end in .json/.json5, skipping.",
                 in_file.as_ref().display()
             );
             return Ok(());
@@ -68,9 +68,15 @@ pub fn transpile_file<P: AsRef<Path>>(
     };
 
     let infile_file = File::open(&infile)?;
-    let infile_reader = BufReader::new(infile_file);
+    let mut infile_reader = BufReader::new(infile_file);
 
-    let file: Module = match serde_json::de::from_reader(infile_reader) {
+    let mut buf: Vec<u8> = Vec::new();
+    infile_reader
+        .read_to_end(&mut buf)
+        .unwrap_or_else(|err| panic!("failed to read the file at {}: {}", infile.display(), err));
+    let data = std::str::from_utf8(&buf).expect("JSON file is not valid UTF-8!");
+
+    let file: Module = match json5::from_str(data) {
         Ok(data) => data,
         Err(err) => {
             return Err(Box::new(TranspileError::new(

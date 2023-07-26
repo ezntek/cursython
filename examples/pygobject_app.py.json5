@@ -1,0 +1,212 @@
+{
+    type: "Module",
+    name: "pygobject_app",
+    content: [
+        // import gi and sys
+        { type: "ImportStmt", mod_name: { type: "Ident", name: "sys" }},
+        { type: "ImportStmt", mod_name: { type: "Ident", name: "gi" }},
+    
+        // gi.require_version("Gtk", "4.0")
+        {
+            type: "CallStmt",
+            base: {
+                // gi.require_version
+                type: "PropertyStmt",
+                base: { type: "Ident", name: "gi" },
+                props: [{ type: "Ident", name: "require_version" }],
+            },
+            args: [
+                // ("Gtk", "4.0")
+                { type: "Literal", value: "\"Gtk\""},
+                { type: "Literal", value: "\"4.0\""},
+            ],
+            kw_args: [],
+        },
+
+        // from gi.repository import Glib, Gtk
+        {
+            type: "FromImportStmt",
+            import_from: {
+                type: "PropertyStmt",
+                base: { type: "Ident", name: "gi" },
+                props: [{ type: "Ident", name: "repository" }]
+            },
+            mod_name: {
+                type: "TupleStmt",
+                elems: [
+                    { type: "Ident", name: "GLib" },
+                    { type: "Ident", name: "Gtk" },
+                ],
+            }
+        },
+
+        // class MyApp(Gtk.Application)
+        {
+            type: "ClassStmt",
+            name: { "type": "Ident", name: "MyApp" },
+            parents: [
+                // Gtk.Application
+                {
+                    type: "PropertyStmt",
+                    base: { type: "Ident", name: "Gtk" },
+                    props: [{ type: "Ident", name: "Application"}],
+                }
+            ],
+            methods: [
+                {   
+                    // def __init__(self)
+                    type: "DefStmt",
+                    name: { type: "Ident", name: "__init__" },
+                    args: [{ type: "Ident", name: "self" }],
+                    kw_args: [],
+                    content: {
+                        type: "Block",
+                        content: [
+                            // super().__init__(application_id="com.example.MyGtkApp")
+                            {
+                                type: "CallStmt",
+                                base: {
+                                    type: "PropertyStmt",
+                                    base: {
+                                       type: "CallStmt",
+                                       base: { type: "Ident", name: "super" },
+                                       args: [],
+                                       kw_args: [],
+                                    },
+                                    props: [{ type: "Ident", name: "__init__"}],
+                                },
+                                args: [],
+                                kw_args: [
+                                    {
+                                        type: "Kwarg",
+                                        name: {
+                                            type: "Ident",
+                                            name: "application_id",
+                                        },
+                                        value: {
+                                            type: "Literal",
+                                            value: "\"com.example.MyGtkApp\"",
+                                        },
+                                    }
+                                ]
+                            },
+
+                            // GLib.set_application_name("My GTK app")
+                            {
+                                type: "CallStmt",
+                                base: {
+                                    type: "PropertyStmt",
+                                    base: { type: "Ident", name: "GLib" },
+                                    props: [
+                                        {
+                                            type: "Ident",
+                                            name: "set_application_name"
+                                        }
+                                    ],
+                                },
+                                args: [{ type: "Literal", value: "\"My GTK app\""}],
+                                kw_args: [],
+                            }
+                        ]
+                    }
+                },
+
+                // def do_activate(self)
+                {
+                    type: "DefStmt",
+                    name: { type: "Ident", name: "do_activate" },
+                    args: [{ type: "Ident", name: "self" }],
+                    kw_args: [],
+                    content: {
+                        type: "Block",
+                        content: [
+                            // window = Gtk.ApplicationWindow(application=self, title="Hello, World")
+                            {
+                                type: "SetStmt",
+                                name: { type: "Ident", name: "window" },
+                                value: {
+                                    type: "CallStmt",
+                                    base: {
+                                        type: "PropertyStmt",
+                                        base: { type: "Ident", name: "Gtk" },
+                                        props: [
+                                            {
+                                                type: "Ident",
+                                                name: "ApplicationWindow",
+                                            }
+                                        ]
+                                    },
+                                    args: [],
+                                    kw_args: [
+                                        {
+                                            type: "Kwarg",
+                                            name: {
+                                                type: "Ident",
+                                                name: "application"
+                                            },
+                                            value: { type: "Ident", name: "self" },
+                                        },
+                                        {
+                                            type: "Kwarg",
+                                            name: { type: "Ident", name: "title" },
+                                            value: {
+                                                type: "Literal",
+                                                value: "\"Hello, World!\""
+                                            }
+                                        }
+                                    ]
+                                }
+                            },
+                            // window.present()
+                            {
+                                type: "CallStmt",
+                                base: {
+                                    type: "PropertyStmt",
+                                    base: { type: "Ident", name: "window" },
+                                    props: [{ type: "Ident", name: "present" }],
+                                },
+                                args: [],
+                                kw_args: [],
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+
+        // sys.exit(MyApp().run(sys.argv))
+        {
+            "type": "CallStmt", 
+            "base": {
+                type: "PropertyStmt",
+                base: { type: "Ident", name: "sys" },
+                props: [{ type: "Ident", name: "exit" }],
+            },
+            args: [
+                // MyApp().run(sys.argv)
+                {
+                    type: "CallStmt",
+                    base: {
+                        type: "PropertyStmt",
+                        base: {
+                            type: "CallStmt",
+                            base: { type: "Ident", name: "MyApp" },
+                            args: [],
+                            kw_args: [],
+                        },
+                        props: [{ type: "Ident", name: "run" }],
+                    },
+                    args: [
+                        {
+                            type: "PropertyStmt",
+                            base: { type: "Ident", name: "sys" },
+                            props: [{ type: "Ident", name: "argv" }],
+                        }
+                    ],
+                    kw_args: [],
+                }
+            ],
+            kw_args: [],
+        }
+    ]
+}

@@ -58,7 +58,7 @@
                                                         "op": "Sub",
                                                         "values": [
                                                             { "type": "Ident", "name": "n" },
-                                                            { "type": "Literal", "value": "1" },
+                                                            { "type": "Literal", "value": "1" }
                                                         ]
                                                     }
                                                 ],
@@ -111,7 +111,7 @@
                                                 "op": "Add",
                                                 "values": [
                                                     { "type": "Ident", "name": "i" },
-                                                    { "type": "Literal", "value": "1" },
+                                                    { "type": "Literal", "value": "1" }
                                                 ]
                                             }
                                         ],
