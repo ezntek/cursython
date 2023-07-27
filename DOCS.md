@@ -342,4 +342,4 @@ This is a function definition.
 }
 ```
 
-Lastly, the class definition. check out [these](/examples/cherrypy_webapp.py.json) [examples](/examples/pygobject_app.py.json) because I really dont want to write anymore docs.
+Lastly, the class definition. check out [these](/examples/cherrypy_webapp.py.json) [examples](/examples/pygobject_app.py.json5) because I really dont want to write anymore docs.
