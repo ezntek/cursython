@@ -4,13 +4,6 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "type")]
-pub struct DictKvPair {
-    key: Value,
-    value: Value,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-#[serde(tag = "type")]
 pub enum IfBranch {
     If { condition: Value, content: Block },
     Elif { condition: Value, content: Block },
@@ -66,24 +59,6 @@ pub struct YieldStmt {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "type")]
-pub struct TupleStmt {
-    elems: Box<[Value]>,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-#[serde(tag = "type")]
-pub struct ListStmt {
-    elems: Box<[Value]>,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-#[serde(tag = "type")]
-pub struct DictStmt {
-    elems: Box<[DictKvPair]>,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-#[serde(tag = "type")]
 pub struct PropertyStmt {
     base: Value,
     props: Box<[Ident]>,
@@ -134,13 +109,6 @@ pub struct ClassStmt {
 }
 
 #[typetag::serde]
-impl Codegen for DictKvPair {
-    fn code_gen(&self) -> String {
-        format!("{}: {}", self.key.code_gen(), self.value.code_gen())
-    }
-}
-
-#[typetag::serde]
 impl Codegen for SetStmt {
     fn code_gen(&self) -> String {
         format!("{} = {}", self.name.code_gen(), self.value.code_gen())
@@ -187,47 +155,6 @@ impl Codegen for ReturnStmt {
 impl Codegen for YieldStmt {
     fn code_gen(&self) -> String {
         format!("yield {}", self.value.code_gen())
-    }
-}
-
-#[typetag::serde]
-impl Codegen for TupleStmt {
-    fn code_gen(&self) -> String {
-        let res = self
-            .elems
-            .iter()
-            .map(|elem| elem.code_gen())
-            .collect::<Vec<String>>()
-            .join(", ");
-
-        format!("({})", res)
-    }
-}
-
-#[typetag::serde]
-impl Codegen for ListStmt {
-    fn code_gen(&self) -> String {
-        let res = self
-            .elems
-            .iter()
-            .map(|elem| elem.code_gen())
-            .collect::<Vec<String>>()
-            .join(", ");
-
-        format!("[{}]", res)
-    }
-}
-
-#[typetag::serde]
-impl Codegen for DictStmt {
-    fn code_gen(&self) -> String {
-        let res = self
-            .elems
-            .iter()
-            .map(|elem| elem.code_gen())
-            .collect::<Vec<String>>()
-            .join(", ");
-        format!("{{ {} }}", res)
     }
 }
 
@@ -349,7 +276,7 @@ impl Codegen for ForStmt {
                 .map(|ident| ident.code_gen())
                 .collect::<Vec<String>>()
                 .join(",");
-            format!("({})", res)
+            format!("{}", res)
         };
 
         format!(

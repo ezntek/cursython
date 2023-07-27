@@ -6,6 +6,13 @@ use super::{Ident, Value};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "type")]
+pub struct DictKvPair {
+    key: Value,
+    value: Value,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(tag = "type")]
 pub struct Kwarg {
     name: Ident,
     value: Value,
@@ -39,6 +46,23 @@ pub struct LogExpr {
     values: Box<[Value]>,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(tag = "type")]
+pub struct TupleExpr {
+    elems: Box<[Value]>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(tag = "type")]
+pub struct ListExpr {
+    elems: Box<[Value]>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(tag = "type")]
+pub struct DictExpr {
+    elems: Box<[DictKvPair]>,
+}
 #[typetag::serde]
 impl Codegen for Kwarg {
     fn code_gen(&self) -> String {
@@ -95,5 +119,53 @@ impl Codegen for LogExpr {
             .join(format!(" {} ", self.op.code_gen()).as_str());
 
         format!("({})", res)
+    }
+}
+
+#[typetag::serde]
+impl Codegen for TupleExpr {
+    fn code_gen(&self) -> String {
+        let res = self
+            .elems
+            .iter()
+            .map(|elem| elem.code_gen())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        format!("({})", res)
+    }
+}
+
+#[typetag::serde]
+impl Codegen for ListExpr {
+    fn code_gen(&self) -> String {
+        let res = self
+            .elems
+            .iter()
+            .map(|elem| elem.code_gen())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        format!("[{}]", res)
+    }
+}
+
+#[typetag::serde]
+impl Codegen for DictExpr {
+    fn code_gen(&self) -> String {
+        let res = self
+            .elems
+            .iter()
+            .map(|elem| elem.code_gen())
+            .collect::<Vec<String>>()
+            .join(", ");
+        format!("{{ {} }}", res)
+    }
+}
+
+#[typetag::serde]
+impl Codegen for DictKvPair {
+    fn code_gen(&self) -> String {
+        format!("{}: {}", self.key.code_gen(), self.value.code_gen())
     }
 }
