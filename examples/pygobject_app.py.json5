@@ -32,7 +32,7 @@
                 props: [{ type: "Ident", name: "repository" }]
             },
             mod_name: {
-                type: "TupleStmt",
+                type: "TupleExpr",
                 elems: [
                     { type: "Ident", name: "GLib" },
                     { type: "Ident", name: "Gtk" },
